@@ -64,6 +64,7 @@ module VagrantPlugins
       attr_accessor :cpu_model
       attr_accessor :cpu_fallback
       attr_accessor :cpu_features
+      attr_accessor :features
       attr_accessor :numa_nodes
       attr_accessor :loader
       attr_accessor :boot_order
@@ -140,6 +141,9 @@ module VagrantPlugins
       # Attach mgmt network
       attr_accessor :mgmt_attach
 
+      # Additional qemuargs arguments
+      attr_accessor :qemu_args
+
       def initialize
         @uri               = UNSET_VALUE
         @driver            = UNSET_VALUE
@@ -165,6 +169,7 @@ module VagrantPlugins
         @cpu_model         = UNSET_VALUE
         @cpu_fallback      = UNSET_VALUE
         @cpu_features      = UNSET_VALUE
+        @features          = UNSET_VALUE
         @numa_nodes        = UNSET_VALUE
         @loader            = UNSET_VALUE
         @machine_type      = UNSET_VALUE
@@ -236,6 +241,8 @@ module VagrantPlugins
 
         # Attach mgmt network
         @mgmt_attach       = UNSET_VALUE
+
+        @qemu_args  = []
       end
 
       def boot(device)
@@ -480,10 +487,15 @@ module VagrantPlugins
           bus: options[:bus],
           cache: options[:cache] || 'default',
           allow_existing: options[:allow_existing],
-          shareable: options[:shareable]
+          shareable: options[:shareable],
+          serial: options[:serial]
         }
 
         @disks << disk # append
+      end
+
+      def qemuargs(options = {})
+        @qemu_args << options if options[:value]
       end
 
       # code to generate URI from a config moved out of the connect action
@@ -565,6 +577,7 @@ module VagrantPlugins
           end
         @cpu_fallback = 'allow' if @cpu_fallback == UNSET_VALUE
         @cpu_features = [] if @cpu_features == UNSET_VALUE
+        @features = ['acpi','apic','pae'] if @features == UNSET_VALUE
         @numa_nodes = @numa_nodes == UNSET_VALUE ? nil : _generate_numa
         @loader = nil if @loader == UNSET_VALUE
         @machine_type = nil if @machine_type == UNSET_VALUE
@@ -647,6 +660,8 @@ module VagrantPlugins
 
         # Attach mgmt network
         @mgmt_attach = true if @mgmt_attach == UNSET_VALUE
+
+        @qemu_args = [] if @qemu_args == UNSET_VALUE
       end
 
       def validate(machine)
@@ -672,6 +687,7 @@ module VagrantPlugins
           c = disks.dup
           c += other.disks
           result.disks = c
+
           c = cdroms.dup
           c += other.cdroms
           result.cdroms = c

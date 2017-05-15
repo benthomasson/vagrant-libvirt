@@ -34,6 +34,7 @@ module VagrantPlugins
           @uuid = config.uuid
           @cpus = config.cpus.to_i
           @cpu_features = config.cpu_features
+          @features = config.features
           @cpu_mode = config.cpu_mode
           @cpu_model = config.cpu_model
           @cpu_fallback = config.cpu_fallback
@@ -87,9 +88,9 @@ module VagrantPlugins
 
           # PCI device passthrough
           @pcis = config.pcis
-          
+
           # Watchdog device
-          @watchdog_dev = config.watchdog_dev          
+          @watchdog_dev = config.watchdog_dev
 
           # USB device passthrough
           @usbs = config.usbs
@@ -176,6 +177,9 @@ module VagrantPlugins
           env[:ui].info(" -- Cpus:              #{@cpus}")
           @cpu_features.each do |cpu_feature|
             env[:ui].info(" -- CPU Feature:       name=#{cpu_feature[:name]}, policy=#{cpu_feature[:policy]}")
+          end
+          @features.each do |feature|
+            env[:ui].info(" -- Feature:           #{feature}")
           end
           env[:ui].info(" -- Memory:            #{@memory_size / 1024}M")
           env[:ui].info(" -- Management MAC:    #{@management_network_mac}")
@@ -276,7 +280,16 @@ module VagrantPlugins
             env[:ui].info(" -- smartcard device:  mode=#{@smartcard_dev[:mode]}, type=#{@smartcard_dev[:type]}")
           end
 
-          env[:ui].info(" -- Command line : #{@cmd_line}")
+          @qargs = config.qemu_args
+          if not @qargs.empty?
+            env[:ui].info(' -- Command line args: ')
+            @qargs.each do |arg|
+              msg = "    -> value=#{arg[:value]}, "
+              env[:ui].info(msg)
+            end
+          end
+
+          env[:ui].info(" -- Command line : #{@cmd_line}") unless @cmd_line.empty?
 
           # Create libvirt domain.
           # Is there a way to tell fog to create new domain with already

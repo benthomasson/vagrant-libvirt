@@ -313,7 +313,7 @@ end
 * `random_hostname` - To create a domain name with extra information on the end
   to prevent hostname conflicts.
 * `cmd_line` - Arguments passed on to the guest kernel initramfs or initrd to
-  use. Equivalent to qemu `-append`.
+  use. Equivalent to qemu `-append`, only possible to use in combination with `initrd` and `kernel`.
 * `graphics_type` - Sets the protocol used to expose the guest display.
   Defaults to `vnc`.  Possible values are "sdl", "curses", "none", "gtk", "vnc"
   or "spice".
@@ -693,6 +693,7 @@ It has a number of options:
   pre-existing disk. If the disk doesn't exist it will be created.
   Disks with this option set to true need to be removed manually.
 * `shareable` - Set to true if you want to simulate shared SAN storage.
+* `serial` - Serial number of the disk device.
 
 The following example creates two additional disks.
 
@@ -910,6 +911,33 @@ Vagrant.configure("2") do |config|
   config.vm.provider :libvirt do |libvirt|
     # Add smartcard device with type 'tcp'
     domain.smartcard :mode => 'passthrough', :type => 'tcp', :source_mode => 'bind', :source_host => '127.0.0.1', :source_service => '2001'
+  end
+end
+```
+## Features
+
+Hypervisor features can be specified via `libvirt.features` as a list. The default
+options that are enabled are `acpi`, `apic` and `pae`. If you define `libvirt.features`
+you overwrite the defaults, so keep that in mind.
+
+An example:
+
+```ruby
+Vagrant.configure("2") do |config|
+  config.vm.provider :libvirt do |libvirt|
+    # Specify the default hypervisor features
+    libvirt.features = ['acpi', 'apic', 'pae' ]
+  end
+end
+```
+
+A different example for ARM boards:
+
+```ruby
+Vagrant.configure("2") do |config|
+  config.vm.provider :libvirt do |libvirt|
+    # Specify the default hypervisor features
+    libvirt.features = ["apic", "gic version='2'" ]
   end
 end
 ```
@@ -1188,6 +1216,20 @@ Vagrant.configure(2) do |config|
       domain.channel :type => 'unix', :target_type => 'guestfwd', :target_address => '192.0.2.42', :target_port => '4242',
                      :source_path => '/tmp/foo'
     end
+  end
+end
+```
+
+## Custom command line arguments
+You can also specify multiple qemuargs arguments for qemu-system
+
+* `value` - Value
+
+```ruby
+Vagrant.configure("2") do |config|
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.qemuargs :value => "-device"
+    libvirt.qemuargs :value => "intel-iommu"
   end
 end
 ```
